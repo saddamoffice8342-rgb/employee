@@ -9,7 +9,7 @@ MODEL_PATH = "attrition_model.pkl"
 ENCODER_PATH = "label_encoders.pkl"
 DATA_PATH = "WA_Fn-UseC_-HR-Employee-Attrition.csv"
 
-# Load trained model and encoders
+# Load model and encoders
 with open(MODEL_PATH, "rb") as model_file:
     rf_model = pickle.load(model_file)
 with open(ENCODER_PATH, "rb") as le_file:
@@ -46,7 +46,7 @@ for col in cols:
         default_idx = 0
         user_data[col] = st.sidebar.selectbox(col, options, index=default_idx)
     else:
-        # Slider for numerical columns
+        # Slider for numeric columns
         min_val = float(df[col].min())
         max_val = float(df[col].max())
         mean_val = float(df[col].mean())
@@ -56,7 +56,7 @@ for col in cols:
 # 4️⃣ Prediction Button
 # =====================================================
 if st.sidebar.button("🚀 Predict Attrition"):
-    # Include fixed values for non-input columns
+    # Add constant columns
     for col in skip_columns:
         user_data[col] = df_encoded[col].iloc[0]
 
@@ -69,16 +69,19 @@ if st.sidebar.button("🚀 Predict Attrition"):
                 st.warning(f"⚠️ Unexpected category '{user_data[col]}' in '{col}', using default.")
                 user_data[col] = le.transform([le.classes_[0]])[0]
 
-    # Convert to DataFrame
+    # Create DataFrame for prediction
     user_df = pd.DataFrame([user_data])
 
-    # Predict using the trained model
-    prediction = rf_model.predict(user_df)[0]
+    # 🧩 Ensure columns exactly match training features
+    user_df = user_df.reindex(columns=X.columns, fill_value=0)
 
-    # Decode predicted label
+    # ✅ Predict
+    prediction = rf_model.predict(user_df)[0]
     pred_label = label_encoders["Attrition"].inverse_transform([prediction])[0]
 
-    # Display results
+    # =====================================================
+    # 5️⃣ Display Result
+    # =====================================================
     st.markdown("---")
     st.subheader("🎯 Prediction Result")
 
@@ -88,7 +91,8 @@ if st.sidebar.button("🚀 Predict Attrition"):
         st.success("✅ This employee is **likely to stay** (Attrition: NO)")
 
 # =====================================================
-# 5️⃣ Footer
+# 6️⃣ Footer
 # =====================================================
 st.markdown("---")
 st.caption("Developed with ❤️ using Streamlit")
+
